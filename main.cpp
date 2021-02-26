@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstring>
 #include <string>
+#include <iostream>
 
 const char* name = "Terminal Explorer";
 std::string path = "~";
@@ -20,6 +21,20 @@ int getlist(){
             int l = list[list.size()-1].size();
             list[list.size()-1]=list[list.size()-1].substr(0,l-1);
         }
+        if(list.size()==1 && list[0].size()>=6 && list[0][5]=='/'){
+            std::string s = list[0].substr(6);
+            if(s.find_first_of('/')>s.size()){
+                pclose(l);
+                return 0;
+            }
+            s = s.substr(s.find_first_of('/')+1);
+            if(s.compare(path.substr(2))==0){
+                pclose(l);
+                path = path.substr(0,path.find_last_of('/'));
+                getlist();
+                return 2;
+            }
+        }
     }else {
         pclose(l);
         return 1;
@@ -30,7 +45,8 @@ int getlist(){
 
 void printmenu(int sel){
     clear();
-    mvprintw( 0, getmaxx(stdscr)/2 - sizeof(name), name);
+    printw(name);
+    mvprintw(0,getmaxx(stdscr) - path.size(),path.c_str());
     int cr = 1;
     for(int i = 0; i< list.size(); i++){
         if(sel==i)attron(A_REVERSE);
@@ -38,6 +54,11 @@ void printmenu(int sel){
         if(sel==i)attroff(A_REVERSE);
     }
     refresh();
+}
+
+bool isvalidpath(std::string s){
+    //TODO
+    return false;
 }
 
 int main(){
@@ -74,7 +95,21 @@ int main(){
             sel = 0;
             printmenu(sel);
         }else if(in == ':'){
-            //TODO: set path
+            move( getmaxy(stdscr)-3, 0);printw("");curs_set(1);
+            echo();
+            std::string p;
+            int ch;
+            while((ch=getch())!='\n'){
+                p+=char(ch);
+            }
+            if(isvalidpath(p)){
+                path = p;
+                getlist();
+                sel = 0;
+                printmenu(sel);
+            }
+            noecho();
+            curs_set(0);
         }
     }
     endwin();
