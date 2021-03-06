@@ -147,6 +147,9 @@ int main(){
             getlist();
             printmenu(sel);
         }
+        else if(in=='f'){
+            openf(path);
+        }
     }
     endwin();
 }
