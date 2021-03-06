@@ -3,58 +3,44 @@
 #include <cstring>
 #include <string>
 #include <iostream>
+#include <filesystem>
 
 const char* name = "Terminal Explorer";
-std::string path = "~";
-std::vector<std::string> list;
+std::string path = "";
+std::vector<std::pair<int,std::string>> list;
 bool hidden  = false;
 int start,sel;
-// for opening file in default app : xdg-open <path>
+
+int get_type(std::string p){
+    std::filesystem::path pth(p);
+    std::error_code ec;
+    if(std::filesystem::is_directory(pth,ec)){
+        return 1;
+    }
+    //if(ec){std::cout<<ec.message()<<" "<<p<<"\n";}
+    return 0;
+}
+
 int getlist(){
     list.clear();
     FILE* l;
-    if(hidden)l = popen(std::string("ls -A ").append(path).c_str(),"r");
-    else l = popen(std::string("ls ").append(path).c_str(),"r");
+    std::string modified_path = "";
+    for(int i=0;i<path.size();i++){
+        if(path[i]==' ' || path[i]=='\'' || path[i]=='\"' || path[i]=='\\')
+        modified_path += '\\';
+        modified_path += path[i];
+    }
+    if(hidden)l = popen(std::string("ls -A ").append(modified_path).c_str(),"r");
+    else l = popen(std::string("ls ").append(modified_path).c_str(),"r");
     if(l!=NULL){
         while(true){
             char* line;
             char buff[1000];
             line = fgets(buff,sizeof(buff),l);
             if(line==NULL)break;
-            list.push_back(line);
-            int l = list[list.size()-1].size();
-            list[list.size()-1]=list[list.size()-1].substr(0,l-1);
-        }
-        if(list.size()==1){
-            std::string s = list[0];
-            if(s.find_first_of('/')>s.size()){
-                pclose(l);
-                return 0;
-            }
-            s = s.substr(s.find_first_of('/')+1);
-            if(s.find_first_of('/')>s.size()){
-                pclose(l);
-                return 0;
-            }
-            s = s.substr(s.find_first_of('/')+1);
-            if(s.find_first_of('/')>s.size()){
-                pclose(l);
-                return 0;
-            }
-            s = s.substr(s.find_first_of('/')+1);
-            std::string temp = "",temp1 = "";
-            for(int i=0;i<s.size();i++){
-                if(s[i]!='\'')temp+=s[i];
-            }
-            for(int i=0;i<path.size();i++){
-                if(path[i]!='\'')temp1+=path[i];
-            }
-            if(s.compare(temp1.substr(temp1.find_first_of('/')+1))==0){
-                pclose(l);
-                path = path.substr(0,path.find_last_of('/'));
-                getlist();
-                return 2;
-            }
+            std::string fpath = line;
+            fpath = fpath.substr(0,fpath.size()-1);
+            list.push_back(std::make_pair(get_type(path + "/" + fpath),fpath));
         }
     }else {
         pclose(l);
@@ -74,7 +60,9 @@ void printmenu(int sel,int start=0){
     for(int i = start; i< list.size(); i++){
         if(cr == getmaxy(stdscr)-3)break;
         if(sel==i)attron(A_REVERSE);
-        mvprintw( cr++, 0, "%s", list[i].c_str());
+        if(list[i].first)attron(A_BOLD);
+        mvprintw( cr++, 0, "%s", list[i].second.c_str());
+        if(list[i].first)attroff(A_BOLD);
         if(sel==i)attroff(A_REVERSE);
     }
     for(int i=0;i<getmaxx(stdscr);i++)
@@ -87,11 +75,18 @@ bool parsecmd(std::string s){
     return false;
 }
 
-void openf(std::string s){
-    system(std::string("xdg-open ").append(s).c_str());
+void openf(std::string path){
+    std::string modified_path = "";
+    for(int i=0;i<path.size();i++){
+        if(path[i]==' ' || path[i]=='\'' || path[i]=='\"' || path[i]=='\\')
+        modified_path += '\\';
+        modified_path += path[i];
+    }
+    system(std::string("xdg-open ").append(modified_path).append(std::string(" > /dev/null 2>&1")).c_str());
 }
 
 int main(){
+    path = std::getenv("HOME");
     initscr();
 	clear();
 	noecho();
@@ -105,40 +100,32 @@ int main(){
     while((in = getch()) != 27 && in !='q' && in!='Q'){
         if(in == KEY_DOWN){
             sel = (sel + 1)%list.size();
-            if(sel>getmaxy(stdscr)-5)start = sel-getmaxy(stdscr)+5;
-            else start = 0;
+            if((sel-start)>getmaxy(stdscr)-5)start = sel - getmaxy(stdscr) + 5;
+            if(sel<start)start = sel;
             printmenu(sel,start);
         }
         else if(in == KEY_UP){
             sel = (sel  + list.size() - 1)%list.size();
-            if(sel>getmaxy(stdscr)-5)start = sel-getmaxy(stdscr)+5;
-            else start = 0;
+            if((sel-start)>getmaxy(stdscr)-5)start = sel - getmaxy(stdscr) + 5;
+            if(sel<start)start = sel;
             printmenu(sel,start);
         }
         else if(in == KEY_LEFT){
             path = path.substr(0,path.find_last_of('/'));
+            if(path.size()==0)path = "/";
             getlist();
-            sel = 0;
+            sel = 0;start=0;
             printmenu(sel);
         }
         else if(in == KEY_RIGHT || in == '\n'){
-            std::string temp = path;
-            if(list[sel].find_first_of(' ')>list[sel].size() 
-                && list[sel].find_first_of('(')>list[sel].size() 
-                && list[sel].find_first_of(')')>list[sel].size())path = path +  "/" + list[sel];
-            else path = path + "/'" + list[sel] + "'";
-            int r = getlist();
-            if(r==1){
-                path=temp;
+            if(list[sel].first){
+                path = path + "/" + list[sel].second;
                 getlist();
-            }else if(r==2){
-                if(list[sel].find_first_of(' ')>list[sel].size() 
-                    && list[sel].find_first_of('(')>list[sel].size() 
-                    && list[sel].find_first_of(')')>list[sel].size())openf(path +  "/" + list[sel]);
-                else openf(path + "/'" + list[sel] + "'");
+                sel = 0;start=0;
+                printmenu(sel);
+            }else{
+                openf(path + "/" + list[sel].second);
             }
-            sel = 0;
-            printmenu(sel);
         }
         else if(in == ':'){
             move( getmaxy(stdscr)-1, 0);
