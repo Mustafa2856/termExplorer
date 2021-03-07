@@ -70,11 +70,6 @@ void printmenu(int sel,int start=0){
     refresh();
 }
 
-bool parsecmd(std::string s){
-    //TODO
-    return false;
-}
-
 void openf(std::string path){
     std::string modified_path = "";
     for(int i=0;i<path.size();i++){
@@ -133,21 +128,6 @@ int main(){
                 openf(path + "/" + list[sel].second);
             }
         }
-        else if(in == ':'){
-            move( getmaxy(stdscr)-1, 0);
-            curs_set(1);
-            echo();
-            std::string p="";
-            int ch;
-            while((ch=getch())!='\n'){
-                p+=char(ch);
-            }
-            if(!parsecmd(p)){
-                printmenu(sel);
-            }
-            noecho();
-            curs_set(0);
-        }
         else if(in=='h' || in=='H'){
             hidden = !hidden;
             getlist();
@@ -187,6 +167,18 @@ int main(){
                 }
             }
             goto keychk;
+        }
+        else if(in==KEY_DC){
+            std::string modified_path = "";
+            std::string pth = path + "/"+list[sel].second;
+            for(int i=0;i<pth.size();i++){
+                if(pth[i]==' ' || pth[i]=='\'' || pth[i]=='\"' || pth[i]=='\\' || pth[i]=='(' || pth[i]==')')
+                modified_path += '\\';
+                modified_path += pth[i];
+            }
+            system(std::string("trash-put ").append(modified_path).append(std::string(" > /dev/null 2>&1")).c_str());
+            getlist();
+            printmenu(sel,start);
         }
     }
     endwin();
