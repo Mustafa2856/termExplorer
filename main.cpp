@@ -26,7 +26,7 @@ int getlist(){
     FILE* l;
     std::string modified_path = "";
     for(int i=0;i<path.size();i++){
-        if(path[i]==' ' || path[i]=='\'' || path[i]=='\"' || path[i]=='\\')
+        if(path[i]==' ' || path[i]=='\'' || path[i]=='\"' || path[i]=='\\' || path[i]=='(' || path[i]==')')
         modified_path += '\\';
         modified_path += path[i];
     }
@@ -78,11 +78,16 @@ bool parsecmd(std::string s){
 void openf(std::string path){
     std::string modified_path = "";
     for(int i=0;i<path.size();i++){
-        if(path[i]==' ' || path[i]=='\'' || path[i]=='\"' || path[i]=='\\')
+        if(path[i]==' ' || path[i]=='\'' || path[i]=='\"' || path[i]=='\\' || path[i]=='(' || path[i]==')')
         modified_path += '\\';
         modified_path += path[i];
     }
     system(std::string("xdg-open ").append(modified_path).append(std::string(" > /dev/null 2>&1")).c_str());
+}
+
+bool isValidChar(int c){
+    if(c=='/' || c==KEY_UP || c=='\n' || c==KEY_DOWN || c==KEY_RIGHT || c==KEY_LEFT || c==27)return false;
+    return true;
 }
 
 int main(){
@@ -98,6 +103,7 @@ int main(){
     printmenu(sel);
     int in = 0;
     while((in = getch()) != 27 && in !='q' && in!='Q'){
+        keychk: 
         if(in == KEY_DOWN){
             sel = (sel + 1)%list.size();
             if((sel-start)>getmaxy(stdscr)-5)start = sel - getmaxy(stdscr) + 5;
@@ -149,6 +155,38 @@ int main(){
         }
         else if(in=='f'){
             openf(path);
+        }
+        else if(in=='t'){
+            std::string modified_path = "";
+            for(int i=0;i<path.size();i++){
+                if(path[i]==' ' || path[i]=='\'' || path[i]=='\"' || path[i]=='\\' || path[i]=='(' || path[i]==')')
+                modified_path += '\\';
+                modified_path += path[i];
+            }
+            system(std::string("xterm -e \"cd ").append(modified_path).append(std::string(";bash\" > /dev/null 2>&1 &")).c_str());
+        }
+        else if(in=='s'){
+            int si = 0;
+            while(isValidChar(in = getch())){
+                for(int i = 0;i < list.size();i++){
+                    if(si>list[i].second.size())continue;
+                    if(si==0 && list[i].second[si]=='.'){
+                        if(list[i].second.size()>1 && list[i].second[1]<in)continue;
+                        else if(list[i].second.size()<=1)continue;
+                    }
+                    if(list[i].second[si]>='A' && list[i].second[si]<='Z'){
+                        if(in>(list[i].second[si]+32))continue;
+                    }
+                    else if(in>list[i].second[si])continue;
+                    if(si==list[i].second[si]==in || (in==(list[i].second[si]+32) && list[i].second[si]>='A' && list[i].second[si]<='Z'))
+                    si++;
+                    sel = i;
+                    start = i;
+                    printmenu(sel,start);
+                    break;
+                }
+            }
+            goto keychk;
         }
     }
     endwin();

@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "*.tcc": "cpp",
+        "string": "cpp"
     }
 }
