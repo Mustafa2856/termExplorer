@@ -18,6 +18,7 @@ clang++ main.cpp -o TE -lncurses -lstdc++fs -std=c++1z
 ./TE
 ```
 ### Key Bindings:
+```
 h : toggle view hidden files mode
 f : open in default file explorer
 t : open in terminal (xterm supported by default)
@@ -26,3 +27,4 @@ s : to enter search mode ( Press of valid character selects first file/folder wi
 Up/Down : to navigate in the directory
 Right(or Enter) : to open directory/file
 Left : to go back a directory
+```
