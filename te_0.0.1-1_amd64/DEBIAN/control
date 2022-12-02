@@ -1,0 +1,7 @@
+Package: te
+Version: 0.0.1
+Maintainer: Mustafa Officewala <officewala@gmail.com>
+Source: https://github.com/Mustafa2856/termExplorer
+Depends: trash-cli, vim
+Architecture: amd64
+Description: An in-terminal file explorer for gnome-terminal

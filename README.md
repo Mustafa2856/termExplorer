@@ -1,27 +1,23 @@
-# Terminal File Explorer
-file explorer in console on linux
-### Dependencies install:
-#### Ubuntu/Debian:
-```
-sudo apt install libncurses-dev trash-cli -y
-```
-#### Fedora/CentOS:
-```
-sudo dnf install ncurses-devel trash-cli
-```
-### To compile:
+# Terminal File Explorer (te)
+An in-terminal file explorer for gnome-terminal
+## Installation Instructions:
+### Ubuntu / Debian-based:
+Install the .deb file
 ```bash
-clang++ main.cpp -o TE -lncurses -lstdc++fs -std=c++1z
+sudo gedbi *.deb
 ```
-### To run:
-```
-./TE
-```
-### Add it to /usr/bin/
+
+To remove:
 ```bash
-cp TE /usr/bin/te
+sudo apt purge te
 ```
-### Key Bindings:
+### Other linux distributions
+To install:
+```bash
+sudo cp te /usr/bin/te
+```
+To remove delete the file /usr/bin/te
+## Key Bindings:
 *   h : toggle view hidden files mode
 *   f : open in default file explorer
 *   t : open in terminal (gnome-terminal supported by default)
@@ -32,3 +28,25 @@ cp TE /usr/bin/te
 *   Up/Down : to navigate in the directory
 *   Right(or Enter) : to open directory/file
 *   Left : to go back a directory
+## For development:
+### Dependencies install:
+#### Ubuntu / Debian:
+```
+sudo apt install libncurses-dev trash-cli -y
+```
+#### Fedora/CentOS:
+```
+sudo dnf install ncurses-devel trash-cli
+```
+### To compile:
+```bash
+clang++ main.cpp -o te -lncurses -lstdc++fs -std=c++1z
+```
+### To run:
+```
+./te
+```
+### Add it to /usr/bin/
+```bash
+cp te /usr/bin/te
+```
