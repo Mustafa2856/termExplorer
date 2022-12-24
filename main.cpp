@@ -116,7 +116,7 @@ void openVim(std::string path)
       modified_path += '\\';
     modified_path += path[i];
   }
-  system(std::string("gnome-terminal -- vim ").append(modified_path).c_str());
+  system(std::string("tmux new-window vim ").append(modified_path).c_str());
 }
 
 bool isValidChar(int c)
@@ -127,9 +127,18 @@ bool isValidChar(int c)
   return true;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
   path = std::getenv("HOME");
+  if(argc > 1) {
+      FILE* pwd = popen(std::string("cd ").append(argv[1]).append("; pwd").c_str(),"r");
+      char buff[1000];
+      char* line;
+      line = fgets(buff,sizeof(buff),pwd);
+      path = line;
+      path = path.substr(0,path.size()-1);
+      pclose(pwd);
+  }
   initscr();
   clear();
   noecho();
@@ -217,7 +226,7 @@ int main()
           modified_path += '\\';
         modified_path += path[i];
       }
-      system(std::string("gnome-terminal --working-directory=")
+      system(std::string("tmux new-window -c ")
                  .append(modified_path)
                  .c_str());
     }
